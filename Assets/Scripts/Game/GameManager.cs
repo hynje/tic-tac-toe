@@ -233,7 +233,17 @@ public class GameManager : Singleton<GameManager>
     /// <returns>플레이어 기준 결과</returns>
     private GameResult CheckGameResult()
     {
-        if (CheckGameWin(PlayerType.PlayerA)) { return GameResult.Win; }
+        if (CheckGameWin(PlayerType.PlayerA))
+        {
+            StartCoroutine(NetworkManager.Instance.AddScore(10, () =>
+            {
+
+            }, () =>
+            {
+
+            }));
+            return GameResult.Win;
+        }
 
         if (CheckGameWin(PlayerType.PlayerB)) { return GameResult.Lose; }
 
