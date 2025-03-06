@@ -90,6 +90,20 @@ public class GameManager : Singleton<GameManager>
         {
             var leaderboardPanelObject = Instantiate(leaderboardPanel, _canvas.transform);
             
+            StartCoroutine(NetworkManager.Instance.GetLeaderboard(
+                ranks => 
+                {
+                    foreach (var rank in ranks.scores)
+                    {
+                        //Debug.Log($"닉네임: {rank.nickname}, 점수: {rank.score}");
+                        var leaderboardController = leaderboardPanelObject.GetComponent<LeaderBoardController>();
+                        leaderboardController.CreateCell(rank);
+                    }
+                }, 
+                () =>
+                {
+                    Debug.LogError("랭킹 가져오기 실패: ");
+                }));
         }
     }
 
