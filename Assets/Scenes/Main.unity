@@ -349,6 +349,7 @@ MonoBehaviour:
   confirmPanel: {fileID: 1255925898165267479, guid: 3adcd8b501021450f968829c3887048c, type: 3}
   signupPanel: {fileID: 523266285143202000, guid: 0e8b7b7b8f0d14ee4afccc083ac5a1fa, type: 3}
   signinPanel: {fileID: 5931327202596387005, guid: 1ab940d8fc70b4633a55a056edd0e2b4, type: 3}
+  leaderboardPanel: {fileID: 30488228002482220, guid: 6cdfb7f1f02e74f82a84c7acf407e832, type: 3}
 --- !u!4 &897829627
 Transform:
   m_ObjectHideFlags: 0
@@ -445,7 +446,7 @@ GameObject:
   - component: {fileID: 1040497297}
   - component: {fileID: 1040497296}
   m_Layer: 5
-  m_Name: Score Button
+  m_Name: Leaderboard Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -517,7 +518,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 9221470397935194796}
         m_TargetAssemblyTypeName: MainPanelController, Assembly-CSharp
-        m_MethodName: OnClickScoreButton
+        m_MethodName: OnClickLeaderboardButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

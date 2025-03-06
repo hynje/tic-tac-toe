@@ -10,6 +10,7 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private GameObject confirmPanel;
     [SerializeField] private GameObject signupPanel;
     [SerializeField] private GameObject signinPanel;
+    [SerializeField] private GameObject leaderboardPanel;
     
     private BlockController _blockController;
     private GameUIController _gameUIController;
@@ -79,6 +80,15 @@ public class GameManager : Singleton<GameManager>
         if (_canvas != null)
         {
             var signupPanelObject = Instantiate(signupPanel, _canvas.transform);
+            
+        }
+    }
+
+    public void OpenLeaderboardPanel()
+    {
+        if (_canvas != null)
+        {
+            var leaderboardPanelObject = Instantiate(leaderboardPanel, _canvas.transform);
             
         }
     }
@@ -237,7 +247,7 @@ public class GameManager : Singleton<GameManager>
         {
             StartCoroutine(NetworkManager.Instance.AddScore(10, () =>
             {
-
+                
             }, () =>
             {
 

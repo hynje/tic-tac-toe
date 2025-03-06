@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -22,6 +23,21 @@ public struct ScoreResult
     public string nickname;
     public int score;
 }
+
+[Serializable]
+public struct ScoreInfo
+{
+    public string username;
+    public string nickname;
+    public int score;
+}
+
+[Serializable]
+public struct Scores
+{
+    public ScoreInfo[] scores;
+}
+
 public class SigninPanelController : MonoBehaviour
 {
     [SerializeField] TMP_InputField usernameInputField;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -186,6 +187,40 @@ public class NetworkManager : Singleton<NetworkManager>
             else
             {
                 success?.Invoke();
+            }
+        }
+    }
+
+    public IEnumerator GetLeaderboard(Action<Scores> success, Action failure)
+    {
+        using (UnityWebRequest www = 
+               new UnityWebRequest(Constants.ServerURL + "/leaderboard",  UnityWebRequest.kHttpVerbGET))
+        {
+            www.downloadHandler = new DownloadHandlerBuffer();
+            
+            string sid = PlayerPrefs.GetString("sid", "");
+            if (!string.IsNullOrEmpty(sid))
+            {
+                www.SetRequestHeader("Cookie",sid);
+            }
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.ConnectionError ||
+                www.result == UnityWebRequest.Result.ProtocolError)
+            {
+                if (www.responseCode == 403)
+                {
+                    Debug.Log("로그인이 필요합니다.");
+                }
+                    
+                failure?.Invoke();
+            }
+            else
+            {
+                var result = www.downloadHandler.text;
+                var scores = JsonUtility.FromJson<Scores>(result);
+                
+                success?.Invoke(scores);
             }
         }
     }
