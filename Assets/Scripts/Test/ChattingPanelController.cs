@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ChattingPanelController : MonoBehaviour
@@ -30,6 +31,8 @@ public class ChattingPanelController : MonoBehaviour
         messageInputField.interactable = false;
         _multiplayManager = new MultiplayManager((state, id) =>
         {
+            Debug.Log($"[MultiplayManager] State Changed: {state}, Room ID: {id}");
+            
             switch (state)
             {
                 case Constants.MultiplayManagerState.CreateRoom:
@@ -39,26 +42,41 @@ public class ChattingPanelController : MonoBehaviour
                 case Constants.MultiplayManagerState.JoinRoom:
                     Debug.Log("## Join Room");
                     _roomId = id;
-                    messageInputField.interactable = true;
+                    UnityThread.executeInUpdate(() => { messageInputField.interactable = true; });
                     break;
                 case Constants.MultiplayManagerState.StartGame:
                     Debug.Log("## Start Game");
-                    messageInputField.interactable = true;
+                    UnityThread.executeInUpdate(() => { messageInputField.interactable = true; });
                     break;
                 case Constants.MultiplayManagerState.EndGame:
                     Debug.Log("## End Game");
                     break;
             }
         });
-        _multiplayManager.OnReceiveMessage =  OnReceiveMessage;
+        _multiplayManager.OnReceiveMessage = OnReceiveMessage;
+        
+        // [디버깅] 콜백이 제대로 설정되었는지 확인
+        if (_multiplayManager.OnReceiveMessage == null)
+        {
+            Debug.LogError("❌ OnReceiveMessage가 설정되지 않았음!");
+        }
+        else
+        {
+            Debug.Log("✅ OnReceiveMessage가 정상적으로 설정됨.");
+        }
     }
 
     private void OnReceiveMessage(MessageData messageData)
     {
         UnityThread.executeInUpdate(() =>
         {
-            var  messageText = Instantiate(messageTextPrefab, messageTextParent);
-            messageText.GetComponent<TextMeshProUGUI>().text = messageData.nickName + " : " + messageData.message;
+            var messageTextObject = Instantiate(messageTextPrefab, messageTextParent);
+            messageTextObject.GetComponent<TMP_Text>().text = messageData.nickName + " : " + messageData.message;
         });
+    }
+
+    private void OnApplicationQuit()
+    {
+        _multiplayManager.Dispose();
     }
 }

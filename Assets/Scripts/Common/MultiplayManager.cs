@@ -26,7 +26,7 @@ public class MessageData
     public string message { get; set; }
 }
 
-public class MultiplayManager
+public class MultiplayManager : IDisposable
 {
     private SocketIOUnity _socket;
 
@@ -83,6 +83,16 @@ public class MultiplayManager
 
     public void SendMessage(string roomId, string nickName, string message)
     {
-        _socket.Emit("message", new {roomId, nickName, message});
+        _socket.Emit("sendMessage", new {roomId, nickName, message});
+    }
+
+    public void Dispose()
+    {
+        if (_socket != null)
+        {
+            _socket.Disconnect();
+            _socket.Dispose();
+            _socket = null;
+        }
     }
 }
