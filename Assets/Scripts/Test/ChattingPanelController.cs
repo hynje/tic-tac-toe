@@ -54,16 +54,6 @@ public class ChattingPanelController : MonoBehaviour
             }
         });
         _multiplayManager.OnReceiveMessage = OnReceiveMessage;
-        
-        // [디버깅] 콜백이 제대로 설정되었는지 확인
-        if (_multiplayManager.OnReceiveMessage == null)
-        {
-            Debug.LogError("❌ OnReceiveMessage가 설정되지 않았음!");
-        }
-        else
-        {
-            Debug.Log("✅ OnReceiveMessage가 정상적으로 설정됨.");
-        }
     }
 
     private void OnReceiveMessage(MessageData messageData)

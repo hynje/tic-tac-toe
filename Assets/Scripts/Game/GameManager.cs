@@ -19,7 +19,7 @@ public class GameManager : Singleton<GameManager>
     public enum PlayerType { None, PlayerA, PlayerB }
     private PlayerType[,] _board;
 
-    private enum TurnType {PlayerA, PlayerB}
+    public enum TurnType {PlayerA, PlayerB}
 
     public enum GameResult
     {
@@ -29,8 +29,14 @@ public class GameManager : Singleton<GameManager>
         Draw    // 비김 
     }
     
-    public enum GameType{SinglePlayer, DualPlayer}
+    public enum GameType{SinglePlayer, DualPlayer, MultiPlayer}
     private GameType _gameType;
+    
+    private MultiplayManager _multiPlayManager;
+    private string _roomId;
+    private bool _isMyTurn;
+
+    private bool _isOnGame;
 
     private void Start()
     {
@@ -41,12 +47,43 @@ public class GameManager : Singleton<GameManager>
     public void ChangeToGameScene(GameType gameType)
     {
         _gameType = gameType;
+        if (_gameType == GameType.MultiPlayer)
+        {
+            // 멀티플레이 
+            _multiPlayManager = new MultiplayManager((state, id) =>
+            {
+                Debug.Log($"[MultiplayManager] State Changed: {state}, Room ID: {id}");
+            
+                switch (state)
+                {
+                    case Constants.MultiplayManagerState.CreateRoom:
+                        Debug.Log("## Create Room");
+                        _roomId = id;
+                        UnityThread.executeInUpdate(() => { _isMyTurn = true; });
+                        break;
+                    case Constants.MultiplayManagerState.JoinRoom:
+                        Debug.Log("## Join Room");
+                        _roomId = id;
+                        UnityThread.executeInUpdate(() => { _isMyTurn = false; });
+                        break;
+                    case Constants.MultiplayManagerState.StartGame:
+                        Debug.Log("## Start Game");
+                        UnityThread.executeInUpdate(() => { _isOnGame = true; });
+                        break;
+                    case Constants.MultiplayManagerState.EndGame:
+                        Debug.Log("## End Game");
+                        break;
+                }
+            });
+            _multiPlayManager.OnReceiveMove = OnReceiveMove;
+        }
         SceneManager.LoadScene("Game");
     }
 
     public void ChangeToMainScene()
     {
         SceneManager.LoadScene("Main");
+        _multiPlayManager?.Dispose();
     }
 
     public void OpenSettingsPanel()
@@ -80,7 +117,6 @@ public class GameManager : Singleton<GameManager>
         if (_canvas != null)
         {
             var signupPanelObject = Instantiate(signupPanel, _canvas.transform);
-            
         }
     }
 
@@ -133,6 +169,7 @@ public class GameManager : Singleton<GameManager>
     public void EndGame(GameResult gameResult)
     {
         // 게임오버 표시
+        _isOnGame = false;
         _gameUIController.SetGameUIMode(GameUIController.GameUIMode.GameOver);
         
         // TODO: 나중에 구현!!
@@ -183,24 +220,48 @@ public class GameManager : Singleton<GameManager>
         {
             case TurnType.PlayerA:
                 _gameUIController.SetGameUIMode(GameUIController.GameUIMode.TurnA);
-                _blockController.onBlockClickedDelegate = (row, col) =>
+                if (_gameType == GameType.MultiPlayer)
                 {
-                    if (SetNewBoardValue(PlayerType.PlayerA, row, col))
+                    _blockController.onBlockClickedDelegate = (row, col) =>
                     {
-                        var gameResult = CheckGameResult();
-                        if (gameResult == GameResult.None)
+                        if (!_isMyTurn || !_isOnGame) return;
+                        if (SetNewBoardValue(PlayerType.PlayerA, row, col))
                         {
-                            SetTurn(TurnType.PlayerB);
+                            // 좌표를 서버로 전송
+                            _multiPlayManager.SendMove(_roomId,PlayerType.PlayerA,TurnType.PlayerB, row, col);
+                            var gameResult = CheckGameResult();
+                            if (gameResult != GameResult.None)
+                            {
+                                EndGame(gameResult);
+                            }
                         }
                         else
-                            EndGame(gameResult);
-                    }
-                    else
+                        {
+                            // TODO : 이미 있는 곳을 터치했을 때 처리
+                        }
+                        _isMyTurn = false;
+                    };
+                }
+                else if(_gameType == GameType.SinglePlayer || _gameType == GameType.DualPlayer)
+                {
+                    _blockController.onBlockClickedDelegate = (row, col) =>
                     {
-                        // TODO : 이미 있는 곳을 터치했을 때 처리
-                    }
-                };
-                
+                        if (SetNewBoardValue(PlayerType.PlayerA, row, col))
+                        {
+                            var gameResult = CheckGameResult();
+                            if (gameResult == GameResult.None)
+                            {
+                                SetTurn(TurnType.PlayerB);
+                            }
+                            else
+                                EndGame(gameResult);
+                        }
+                        else
+                        {
+                            // TODO : 이미 있는 곳을 터치했을 때 처리
+                        }
+                    };
+                }
                 break;
             case TurnType.PlayerB:
                 _gameUIController.SetGameUIMode(GameUIController.GameUIMode.TurnB);
@@ -246,6 +307,28 @@ public class GameManager : Singleton<GameManager>
                         }
                     };
                 }
+                else if (_gameType == GameType.MultiPlayer)
+                {
+                    _blockController.onBlockClickedDelegate = (row, col) =>
+                    {
+                        if(!_isMyTurn || !_isOnGame) return;
+                        if (SetNewBoardValue(PlayerType.PlayerB, row, col))
+                        {
+                            // 좌표를 서버로 전송
+                            _multiPlayManager.SendMove(_roomId,PlayerType.PlayerB,TurnType.PlayerA, row, col);
+                            var gameResult = CheckGameResult();
+                            if (gameResult != GameResult.None)
+                            {
+                                EndGame(gameResult);
+                            }
+                        }
+                        else
+                        {
+                            // TODO : 이미 있는 곳을 터치했을 때 처리
+                        }
+                        _isMyTurn = false;
+                    };
+                }
                 
                 break;
         }
@@ -257,17 +340,7 @@ public class GameManager : Singleton<GameManager>
     /// <returns>플레이어 기준 결과</returns>
     private GameResult CheckGameResult()
     {
-        if (CheckGameWin(PlayerType.PlayerA))
-        {
-            StartCoroutine(NetworkManager.Instance.AddScore(10, () =>
-            {
-                
-            }, () =>
-            {
-
-            }));
-            return GameResult.Win;
-        }
+        if (CheckGameWin(PlayerType.PlayerA)) { return GameResult.Win; }
 
         if (CheckGameWin(PlayerType.PlayerB)) { return GameResult.Lose; }
 
@@ -331,4 +404,30 @@ public class GameManager : Singleton<GameManager>
         
         _canvas = FindObjectOfType<Canvas>();
     }
+
+    #region MultiPlay
+
+    private void OnReceiveMove(MoveData moveData)
+    {
+        
+        UnityThread.executeInUpdate(() =>
+        {
+            _isMyTurn = true;
+            SetNewBoardValue(moveData.playerType, moveData.row, moveData.col);
+            var gameResult = CheckGameResult();
+            if (gameResult == GameResult.None)
+            {
+                SetTurn(moveData.turnType);
+            }
+            else
+                EndGame(gameResult);
+        });
+    }
+    
+    private void OnApplicationQuit()
+    {
+        _multiPlayManager?.Dispose();
+    }
+
+    #endregion
 }

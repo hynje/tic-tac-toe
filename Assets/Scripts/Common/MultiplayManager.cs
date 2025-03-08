@@ -26,12 +26,29 @@ public class MessageData
     public string message { get; set; }
 }
 
+public class MoveData
+{
+    [JsonProperty("playerType")]
+    public GameManager.PlayerType playerType { get; set; }
+
+    [JsonProperty("turnType")]
+    public GameManager.TurnType turnType { get; set; }
+    
+    [JsonProperty("row")]
+    public int row { get; set; }
+    
+    [JsonProperty("col")]
+    public int col { get; set; }
+}
+
 public class MultiplayManager : IDisposable
 {
     private SocketIOUnity _socket;
 
     private event Action<Constants.MultiplayManagerState, string> _onMultiplayStateChanged;
     public Action<MessageData> OnReceiveMessage;
+    public Action<MoveData> OnReceiveMove;
+    
     public MultiplayManager(Action<Constants.MultiplayManagerState, string>  onMultiplayStateChanged)
     {
         _onMultiplayStateChanged = onMultiplayStateChanged;
@@ -47,6 +64,7 @@ public class MultiplayManager : IDisposable
         _socket.On("startGame", StartGame);
         _socket.On("gameEnded", GameEnded);
         _socket.On("receiveMessage", ReceiveMessage);
+        _socket.On("receiveMove",  ReceiveMove);
         
         _socket.Connect();
     }
@@ -84,6 +102,17 @@ public class MultiplayManager : IDisposable
     public void SendMessage(string roomId, string nickName, string message)
     {
         _socket.Emit("sendMessage", new {roomId, nickName, message});
+    }
+
+    private void ReceiveMove(SocketIOResponse response)
+    {
+        var data = response.GetValue<MoveData>();
+        OnReceiveMove?.Invoke(data);
+    }
+
+    public void SendMove(string roomId, GameManager.PlayerType playerType, GameManager.TurnType turnType, int row, int col)
+    {
+        _socket.Emit("sendMove", new { roomId, playerType, turnType, row, col });
     }
 
     public void Dispose()

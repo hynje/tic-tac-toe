@@ -15,6 +15,11 @@ public class MainPanelController : MonoBehaviour
        GameManager.Instance.ChangeToGameScene(GameManager.GameType.DualPlayer);
     }
 
+    public void OnClickMultiPlayButton()
+    {
+        GameManager.Instance.ChangeToGameScene(GameManager.GameType.MultiPlayer);
+    }
+
     public void OnClickSettingsButton()
     {
         GameManager.Instance.OpenSettingsPanel();
