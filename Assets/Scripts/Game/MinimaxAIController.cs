@@ -2,7 +2,7 @@ using System;
 
 public static class MinimaxAIController
 {
-    public static (int row, int col)? GetBestMove(GameManager.PlayerType[,] board)
+    public static (int row, int col)? GetBestMove(Constants.PlayerType[,] board)
     {
         float bestScore = -1000;
         (int row, int col)? bestMove = null;
@@ -11,11 +11,11 @@ public static class MinimaxAIController
         {
             for (int col = 0; col < board.GetLength(1); col++)
             {
-                if (board[row, col] == GameManager.PlayerType.None)
+                if (board[row, col] == Constants.PlayerType.None)
                 {
-                    board[row, col] = GameManager.PlayerType.PlayerB;
+                    board[row, col] = Constants.PlayerType.PlayerB;
                     var score = DoMinimax(board, 0, false);
-                    board[row, col] = GameManager.PlayerType.None;
+                    board[row, col] = Constants.PlayerType.None;
 
                     if (score > bestScore)
                     {
@@ -28,14 +28,14 @@ public static class MinimaxAIController
 
         return bestMove;
     }
-    private static float DoMinimax(GameManager.PlayerType[,] board, int depth, bool isMaximizing)
+    private static float DoMinimax(Constants.PlayerType[,] board, int depth, bool isMaximizing)
     {
-        if (CheckGameWin(GameManager.PlayerType.PlayerA, board))
+        if (CheckGameWin(Constants.PlayerType.PlayerA, board))
         {
             return -10f + depth;
         }
 
-        if (CheckGameWin(GameManager.PlayerType.PlayerB, board))
+        if (CheckGameWin(Constants.PlayerType.PlayerB, board))
         {
             return 10f - depth;
         }
@@ -52,11 +52,11 @@ public static class MinimaxAIController
             {
                 for (int col = 0; col < board.GetLength(1); col++)
                 {
-                    if (board[row, col] == GameManager.PlayerType.None)
+                    if (board[row, col] == Constants.PlayerType.None)
                     {
-                        board[row, col] = GameManager.PlayerType.PlayerB;
+                        board[row, col] = Constants.PlayerType.PlayerB;
                         var score = DoMinimax(board, depth + 1, false);
-                        board[row, col] = GameManager.PlayerType.None;
+                        board[row, col] = Constants.PlayerType.None;
                         bestScore = Math.Max(bestScore, score);
                     }
                 }
@@ -70,11 +70,11 @@ public static class MinimaxAIController
             {
                 for (int col = 0; col < board.GetLength(1); col++)
                 {
-                    if (board[row, col] == GameManager.PlayerType.None)
+                    if (board[row, col] == Constants.PlayerType.None)
                     {
-                        board[row, col] = GameManager.PlayerType.PlayerA;
+                        board[row, col] = Constants.PlayerType.PlayerA;
                         var score = DoMinimax(board, depth + 1, true);
-                        board[row, col] = GameManager.PlayerType.None;
+                        board[row, col] = Constants.PlayerType.None;
                         bestScore = Math.Min(bestScore, score);
                     }
                 }
@@ -83,20 +83,20 @@ public static class MinimaxAIController
         }
     }
     
-    public static bool IsAllBlockPlaced(GameManager.PlayerType[,] board)
+    public static bool IsAllBlockPlaced(Constants.PlayerType[,] board)
     {
         for (var row = 0; row < board.GetLength(0); row++)
         {
             for (var col = 0; col < board.GetLength(1); col++)
             {
-                if(board[row,col] == GameManager.PlayerType.None)
+                if(board[row,col] == Constants.PlayerType.None)
                     return false;
             }
         }
         return true;
     }
     
-    private static bool CheckGameWin(GameManager.PlayerType playerType, GameManager.PlayerType[,] board)
+    private static bool CheckGameWin(Constants.PlayerType playerType, Constants.PlayerType[,] board)
     {
         // 행 확인
         for (var row = 0; row < board.GetLength(0); row++)
