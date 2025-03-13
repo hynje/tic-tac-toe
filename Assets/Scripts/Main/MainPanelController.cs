@@ -29,4 +29,9 @@ public class MainPanelController : MonoBehaviour
     {
         GameManager.Instance.OpenLeaderboardPanel();
     }
+
+    public void OnClickSignOutButton()
+    {
+        GameManager.Instance.OnSignOut();
+    }
 }

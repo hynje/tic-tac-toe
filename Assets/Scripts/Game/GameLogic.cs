@@ -159,12 +159,16 @@ public class MultiplayState : BasePlayerState
 
 public class GameLogic : IDisposable
 {
+    private Constants.GameType _gameType;
+    
     public BlockController blockController;
     private Constants.PlayerType[,] _board;
     
     public BasePlayerState firstPlayerState;
     public BasePlayerState secondPlayerState;
     private BasePlayerState _currentPlayerState;
+    
+    private Constants.PlayerType _myPlayerType;
     
     private MultiplayManager _multiplayManager;
     private string _roomId;
@@ -179,6 +183,7 @@ public class GameLogic : IDisposable
     
     public GameLogic(BlockController blockController, Constants.GameType gameType)
     {
+        _gameType = gameType;
         this.blockController = blockController;
         
         // _board 초기화
@@ -212,6 +217,7 @@ public class GameLogic : IDisposable
                             break;
                         case Constants.MultiplayManagerState.JoinRoom:
                             Debug.Log("## Join Room");
+                            _myPlayerType = Constants.PlayerType.PlayerB;
                             firstPlayerState = new MultiplayState(true, _multiplayManager);
                             secondPlayerState = new PlayerState(false, _multiplayManager, roomId);
                             // 게임 시작
@@ -219,6 +225,7 @@ public class GameLogic : IDisposable
                             break;
                         case Constants.MultiplayManagerState.StartGame:
                             Debug.Log("## Start Game");
+                            _myPlayerType = Constants.PlayerType.PlayerA;
                             firstPlayerState = new PlayerState(true, _multiplayManager, roomId);
                             secondPlayerState = new MultiplayState(false, _multiplayManager);                            
                             // 게임 시작
@@ -331,15 +338,67 @@ public class GameLogic : IDisposable
         
         return false;
     }
-    
+
     /// <summary>
     /// 게임 오버시 호출되는 함수
     /// gameResult에 따라 결과 출력
     /// 
     /// </summary>
     /// <param name="gameResult">win, lose, draw</param>
+    /// <param name="playerType">player type</param>
     public void EndGame(GameResult gameResult)
     {
+        if (_gameType == Constants.GameType.MultiPlayer)
+        {
+            switch (_myPlayerType)
+            {
+                case Constants.PlayerType.PlayerA:
+                    if (gameResult == GameResult.Win)
+                    {
+                        NetworkManager.Instance.AddScore(10, () =>
+                        {
+                            Debug.Log("Get 10 points");
+                        }, () =>
+                        {
+                            Debug.Log("## Fail Add Score");
+                        });
+                    }
+                    else
+                    {
+                        NetworkManager.Instance.AddScore(-10, () =>
+                        {
+                            Debug.Log("Lose 10 points");
+                        }, () =>
+                        {
+                            Debug.Log("## Fail Add Score");
+                        });
+                    }
+                    break;
+                case Constants.PlayerType.PlayerB:
+                    if (gameResult == GameResult.Lose)
+                    {
+                        NetworkManager.Instance.AddScore(10, () =>
+                        {
+                            Debug.Log("Get 10 points");
+                        }, () =>
+                        {
+                            Debug.Log("## Fail Add Score");
+                        });
+                    }
+                    else
+                    {
+                        NetworkManager.Instance.AddScore(-10, () =>
+                        {
+                            Debug.Log("Lose 10 points");
+                        }, () =>
+                        {
+                            Debug.Log("## Fail Add Score");
+                        });
+                    }
+                    break;
+            }
+        }
+        
         SetState(null);
 
         firstPlayerState = null;

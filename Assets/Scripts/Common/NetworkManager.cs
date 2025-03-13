@@ -117,6 +117,34 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
 
+    public IEnumerator SignOut(Action success, Action failure)
+    {
+        using (UnityWebRequest www =
+               new UnityWebRequest(Constants.ServerURL + "/users/signout", UnityWebRequest.kHttpVerbPOST))
+        {
+            www.downloadHandler = new DownloadHandlerBuffer();
+        
+            yield return www.SendWebRequest();
+            
+            if (www.result == UnityWebRequest.Result.ConnectionError ||
+                www.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.Log("Error: " + www.error);
+
+                if (www.responseCode == 500)
+                {
+                    Debug.LogError("로그아웃 실패: " + www.error);
+                    failure?.Invoke();
+                }
+            }
+            else
+            {
+                Debug.Log("로그아웃 성공: " + www.downloadHandler.text);
+                success?.Invoke();
+            }
+        }
+    }
+
     public void GetScore()
     {
         StartCoroutine(GetScoreCoroutine(userInfo =>
@@ -165,7 +193,12 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
 
-    public IEnumerator AddScore(int score, Action success, Action failure)
+    public void AddScore(int score, Action success, Action failure)
+    {
+        StartCoroutine(AddScoreCoroutine(score, success, failure));
+    }
+    
+    private IEnumerator AddScoreCoroutine(int score, Action success, Action failure)
     {
         using (UnityWebRequest www =
                new UnityWebRequest(Constants.ServerURL + "/users/addscore", UnityWebRequest.kHttpVerbPOST))

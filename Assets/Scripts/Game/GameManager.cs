@@ -28,7 +28,7 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         // 로그인 
-        //NetworkManager.Instance.GetScore();
+        NetworkManager.Instance.GetScore();
     }
 
     public void ChangeToGameScene(Constants.GameType gameType)
@@ -100,6 +100,20 @@ public class GameManager : Singleton<GameManager>
                     Debug.LogError("랭킹 가져오기 실패: ");
                 }));
         }
+    }
+
+    public void OnSignOut()
+    {
+        StartCoroutine(NetworkManager.Instance.SignOut(() =>
+        {
+            OpenSigninPanel();
+        }, () =>
+        {
+            OpenConfirmPanel("로그아웃 실패", () =>
+            {
+                
+            });
+        }));
     }
 
     public void OpenGameOverPanel()
